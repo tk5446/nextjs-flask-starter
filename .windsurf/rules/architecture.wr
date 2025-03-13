@@ -1,0 +1,70 @@
+description: "Full-stack architecture for job board with WorkOS authentication"
+globs: ["/**/*"]
+rules:
+  frontend:
+    framework: "Next.js 13.5.4"
+    package_manager: "pnpm"
+    routing:
+      - "Server Components for data fetching and rendering"
+      - "Client Components for interactive elements"
+      - "Layout-based routing with shared components"
+    auth:
+      - "WorkOS AuthKit integration (@workos-inc/authkit-nextjs ^1.0.0)"
+      - "AuthKitProvider for session management"
+      - "Custom AuthProvider component for user context"
+    environment:
+      required_vars:
+        - "NEXT_PUBLIC_WORKOS_CLIENT_ID"
+        - "NEXT_PUBLIC_BASE_URL"
+
+  backend:
+    framework: "Flask 3.0.3"
+    dependencies:
+      - "pymongo 4.6.1"
+      - "python-dotenv 1.0.1"
+      - "flask-cors 4.0.0"
+      - "workos 5.15.0"
+    server:
+      - "Debug mode enabled for development"
+      - "Port 5328 for local development"
+      - "CORS configured for development"
+    patterns:
+      - "RESTful API endpoints"
+      - "JSON responses"
+      - "WorkOS SDK for auth verification"
+    database:
+      type: "MongoDB"
+      driver: "PyMongo"
+    environment:
+      required_vars:
+        - "WORKOS_API_KEY"
+        - "WORKOS_CLIENT_ID"
+        - "MONGO_URI"
+        - "FLASK_DEBUG"
+
+  development:
+    setup:
+      - "pnpm install for frontend dependencies"
+      - "pip install -r requirements.txt for backend dependencies"
+    scripts:
+      - "pnpm run dev: Starts both frontend and backend using concurrently"
+      - "pnpm run next-dev: Next.js development server"
+      - "pnpm run flask-dev: Flask development server"
+    ports:
+      frontend: "3000"
+      backend: "5328"
+
+  deployment:
+    environments:
+      development:
+        frontend: "localhost:3000"
+        backend: "localhost:5328"
+        features:
+          - "Debug mode enabled"
+          - "CORS allowed"
+          - "Hot reloading"
+      production:
+        requirements:
+          - "Environment variables configured"
+          - "WorkOS production credentials"
+          - "MongoDB production cluster"

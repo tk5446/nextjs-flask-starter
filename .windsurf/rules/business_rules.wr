@@ -1,0 +1,47 @@
+description: "Business rules for the Job Board application"
+globs: ["/**/*"]
+rules:
+  job_posting:
+    - "Each job posting must have a unique ID and be associated with an employer account."
+    - "Job postings expire after 30 days unless extended by the employer."
+    - "Employers can feature a job posting for an additional fee."
+    - "Job titles must be between 5 and 100 characters."
+    - "Job descriptions must be at least 200 characters long."
+  user_accounts:
+    - "Users can register as either employers or job seekers."
+    - "We will use WorkOS to handle user authentication and authorization."
+    - "Email verification is required for all new accounts via WorkOS."
+    - "Job seekers can save up to 100 jobs to their favorites list."
+    - "Users can sign up for daily email alerts of jobs that match their preferences or job title keywords."
+  applications:
+    - "Job seekers can apply to any active job posting."
+    - "Employers can review, accept, or reject applications."
+    - "Employers can also provide a link to a job post on their website instead of having applications submitted on our app."
+    - "Application status (e.g., pending, accepted, rejected) must be tracked in the database."
+    - "Employers cannot delete jobs with active applications."
+  payments:
+    - "Stripe is used for payment processing."
+    - "Employers must pay to feature a job listing."
+  search_and_filters:
+    - "Job seekers can filter jobs by location, salary range, employment type (e.g., full-time, part-time)."
+    - "The default search is by job title and is applied to active job postings."
+    - "Search results must prioritize featured job postings."
+    - "Search queries must be case-insensitive and support partial matches."
+  notifications:
+    - "Job seekers receive email notifications when their application status changes."
+    - "Employers receive reminders to renew expiring job postings 3 days before expiration."
+    - "System alerts users of account inactivity after 90 days."
+
+### Key Features of This File
+1. **Structure:** Rules are grouped logically by features (e.g., job posting, user accounts).
+2. **Clarity:** Each rule is concise and actionable.
+3. **Flexibility:** The rules are written in a way that can evolve as the application grows.
+
+---
+
+### How to Use This File
+1. **Place in Project Root:**
+   Save this file as `.windsurf/rules/business_rules.wr` in your project directory.
+
+2. **Link Rules with Cascade Automation:**
+   Add these business rules to your Cascade workflow:

@@ -1,0 +1,24 @@
+description: "Attio-inspired UI patterns for job board"
+globs: ["/**/*.tsx", "/**/*.css"]
+rules:
+  layout:
+    - "Sidebar navigation with main panel layout"
+    - "Kanban board for job workflow stages"
+    - "Grid layout for job listings"
+  typography:
+    - "Primary font: Inter (system fallback)"
+    - "Job titles: 18px semibold"
+    - "Company names: 14px medium + muted color"
+  colors:
+    primary: "#2563eb" # Attio's blue
+    secondary: "#4f46e5"
+    background: "#f8fafc"
+  interactions:
+    - "Smooth transition on hover (150ms ease)"
+    - "Sticky scroll for filters"
+  accessibility:
+    - "WCAG AA contrast ratios"
+    - "Keyboard-navigable filters"
+  components:
+    - "Reusable card components for job listings"
+    - "Customizable stage/status picker"
