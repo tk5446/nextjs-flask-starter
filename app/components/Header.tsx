@@ -16,7 +16,7 @@ export function Header() {
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2">
             <Image
-              src="/logo.svg"
+              src="/next.svg"
               alt="Marin Jobs"
               width={32}
               height={32}

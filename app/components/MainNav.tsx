@@ -10,10 +10,17 @@ import {
   UserIcon, 
   Cog6ToothIcon 
 } from '@heroicons/react/24/outline';
+import { usePathname } from 'next/navigation';
 
 export function MainNav() {
   const { user } = useAuth();
+  const pathname = usePathname();
   const isEmployer = user?.userType === 'employer';
+  const isDashboard = user && (pathname?.startsWith('/dashboard') || pathname?.startsWith('/employer'));
+
+  if (!isDashboard) {
+    return null;
+  }
 
   return (
     <Sidebar>

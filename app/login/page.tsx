@@ -10,7 +10,10 @@ export default function LoginPage() {
   const handleLogin = async (type: 'employer' | 'job_seeker') => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/auth/login?type=${type}`);
+      const flaskApiUrl = process.env.NEXT_PUBLIC_FLASK_API_URL;
+      // alert('Flask API URL: ' + flaskApiUrl);
+      const response = await fetch(`${flaskApiUrl}/api/auth/login?type=${type}`);      
+      
       const data = await response.json();
       
       if (data.authorization_url) {
@@ -41,6 +44,7 @@ export default function LoginPage() {
             </div>
             <div>
               <Text weight="medium" size="4">I'm looking for a job</Text>
+              <br />
               <Text color="gray" size="2">
                 Search and apply for jobs in Marin County
               </Text>
@@ -58,6 +62,7 @@ export default function LoginPage() {
             </div>
             <div>
               <Text weight="medium" size="4">I'm hiring</Text>
+              <br />
               <Text color="gray" size="2">
                 Post jobs and find great talent in Marin County
               </Text>

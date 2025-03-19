@@ -55,10 +55,11 @@ export function calculateNewExpiryDate(currentExpiryDate: string): string {
  * Check if an expired job should be hidden from search results
  */
 export function shouldHideExpiredJob(expiryDate: string): boolean {
-  const now = new Date();
-  const expiry = parseISO(expiryDate);
-  const diffDays = differenceInDays(now, expiry);
-  return diffDays > HIDE_AFTER_DAYS;
+  // const now = new Date();
+  // const expiry = parseISO(expiryDate);
+  // const diffDays = differenceInDays(now, expiry);
+  // return diffDays > HIDE_AFTER_DAYS;
+  return false;
 }
 
 /**

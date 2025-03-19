@@ -2,9 +2,12 @@ description: "Attio-inspired UI patterns for job board"
 globs: ["/**/*.tsx", "/**/*.css"]
 rules:
   layout:
-    - "Sidebar navigation with main panel layout"
+    - "Header navigation with main panel layout"
     - "Kanban board for job workflow stages"
     - "Grid layout for job listings"
+    - "Sidebar navigation with main panel layout for logged-in dashbord view"
+    - "Homepage layout with search bar and job listings"
+    - "Homepage has email job alerts signup in hero section, very prominent"
   typography:
     - "Primary font: Inter (system fallback)"
     - "Job titles: 18px semibold"

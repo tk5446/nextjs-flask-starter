@@ -1,28 +1,69 @@
-from flask import Flask, request, jsonify, session
+from flask import Blueprint, Flask, redirect, request, jsonify, session
 from flask_cors import CORS
 from pymongo import MongoClient
 from bson import ObjectId
 import os
 from dotenv import load_dotenv
 from models import Job
-import workos
+# import workos
 from datetime import datetime
+
 
 load_dotenv()
 
+# Define the api Blueprint here
+# api = Blueprint('api', __name__)
+
+
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
+# CORS(app, resources={r"/api/*": {"origins": ["http://localhost:3002"]}}, supports_credentials=True)
+CORS(app)
 
 # MongoDB connection
 client = MongoClient(os.getenv('MONGO_URI'))
 db = client.get_default_database()
 jobs_collection = db.jobs
 users_collection = db.users
-
+organizations_collection = db.organizations
 # Initialize WorkOS client
-workos.api_key = os.getenv('WORKOS_API_KEY')
-workos.client_id = os.getenv('WORKOS_CLIENT_ID')
-workos.base_api_url = 'https://api.workos.com'
+# workos.api_key = os.getenv('WORKOS_API_KEY')
+# workos.client_id = os.getenv('WORKOS_CLIENT_ID')
+
+
+from workos import WorkOSClient
+
+workos_client = WorkOSClient(
+    api_key=os.getenv('WORKOS_API_KEY'),
+    client_id=os.getenv('WORKOS_CLIENT_ID')
+)
+workos_client.base_api_url = 'https://api.workos.com'
+
+
+@app.route('/create-company', methods=['POST'])
+def create_company():
+    # Get data from request
+    company_name = request.json.get('companyName')
+    user_id = request.json.get('userId')
+
+    if not company_name or not user_id:
+        return jsonify({"error": "Missing companyName or userId"}), 400
+
+    try:
+        # Create the organization (company)
+        org = workos.organizations.create_organization(name=company_name)
+
+        # Add the user to the organization with an admin role
+        workos.user_management.create_organization_membership(
+            user_id=user_id,
+            organization_id=org['id'],
+            role_slug='admin'
+        )
+
+        # After successful operation, redirect to a new page (e.g., '/new-listing')
+        return redirect('/new-listing')
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 def get_user_from_session():
     """Get user information from session"""
@@ -41,40 +82,72 @@ def require_auth(f):
         return f(*args, **kwargs)
     return wrapper
 
+
 @app.route("/api/auth/login", methods=['GET'])
 def login():
-    # Get the client ID from environment variables
+    # Get the client ID and redirect URI from environment variables
     client_id = os.getenv('WORKOS_CLIENT_ID')
-    
-    # Get the redirect URI from environment variables
     redirect_uri = os.getenv('WORKOS_REDIRECT_URI')
-    
-    # Check if this is an employer login
-    is_employer = request.args.get('type') == 'employer'
-    
-    # Generate the authorization URL
-    auth_params = {
-        'client_id': client_id,
-        'redirect_uri': redirect_uri,
-        'state': 'random-state-string'  # In production, use a secure random string
-    }
-    
-    # Only include organization options for employers
-    if is_employer:
-        auth_params['organization_options'] = {
-            'type': 'employer'
-        }
-    
-    authorization_url = workos.client.user_management.get_authorization_url(auth_params)
-    
-    return jsonify({'authorization_url': authorization_url})
+
+    # Get user type (either "employer" or "job_seeker")
+    user_type = request.args.get('type')
+    user_email = request.args.get("email")
+
+    if not user_type:
+        return jsonify({'error': 'User type is required'}), 400
+
+    if user_type == "job_seeker":
+        # Job seekers use standard authentication, no `connection_id`
+        authorization_url = workos_client.user_management.get_authorization_url(
+            client_id=client_id,
+            redirect_uri=redirect_uri,
+            state='random-state-string'
+        )
+        return jsonify({'authorization_url': authorization_url})
+
+    elif user_type == "employer":
+        # Employers require an email to check for existing org
+        if not user_email:
+            return jsonify({'error': 'Employer email is required'}), 400
+
+        email_domain = user_email.split('@')[-1]
+
+        # Check if this employer's org exists in the database
+        employer_org = organizations_collection.find_one({'domain': email_domain})
+
+        if not employer_org:
+            # 🚀 Redirect to WorkOS SSO login/signup flow
+            return jsonify({
+                'redirect_url': workos_client.sso.get_authorization_url(
+                    client_id=client_id,
+                    redirect_uri=redirect_uri,
+                    state='random-state-string',
+                    organization_options={
+                        'type': 'employer'
+                    }
+                )
+            })
+
+        # Employer has an org, proceed with SSO login
+        authorization_url = workos_client.user_management.get_authorization_url(
+            connection_id=employer_org.connection_id,
+            redirect_uri=redirect_uri,
+            state='random-state-string'
+        )
+        return jsonify({'authorization_url': authorization_url})
+
+    else:
+        return jsonify({'error': 'Invalid user type'}), 400
+
 
 @app.route("/api/auth/callback")
 def auth_callback():
     try:
         # Get the code from the callback
         code = request.args.get('code')
-        
+
+        print('auth_callback :: Received code:', code);
+        print('auth_callback :: WORKOS_CLIENT_ID :: ', os.getenv('WORKOS_CLIENT_ID'));
         # Exchange the code for a user
         user = workos.client.user_management.authenticate_with_code({
             'client_id': os.getenv('WORKOS_CLIENT_ID'),
@@ -161,27 +234,34 @@ def delete_job():
     return jsonify({'deleted': result.deleted_count > 0})
 
 @app.route("/api/jobs", methods=['GET'])
-@require_auth
 def get_jobs():
-    search = request.args.get('search', '')
-    user = get_user_from_session()
+    # Fetch all jobs from MongoDB without any filters
+    jobs = list(jobs_collection.find({}, {'_id': 0}))  # No filters, exclude MongoDB's _id field
     
-    query = {
-        'user_id': str(user['_id']),  # Only get user's jobs
-        'title': {'$regex': search, '$options': 'i'} if search else {'$exists': True}
-    }
+    return jsonify({
+        'jobs': jobs
+    })
+
+# def get_jobs():
+#     search = request.args.get('search', '')
+#     user = get_user_from_session()
     
-    jobs = list(jobs_collection.find(
-        query,
-        limit=5,
-        sort=[('created_at', -1)]
-    ))
+#     query = {
+#         'user_id': str(user['_id']),  # Only get user's jobs
+#         'title': {'$regex': search, '$options': 'i'} if search else {'$exists': True}
+#     }
     
-    # Convert ObjectId to string for JSON serialization
-    for job in jobs:
-        job['_id'] = str(job['_id'])
+#     jobs = list(jobs_collection.find(
+#         query,
+#         limit=5,
+#         sort=[('created_at', -1)]
+#     ))
     
-    return jsonify(jobs)
+#     # Convert ObjectId to string for JSON serialization
+#     for job in jobs:
+#         job['_id'] = str(job['_id'])
+    
+#     return jsonify(jobs)
 
 @app.route("/api/auth/user")
 @require_auth
