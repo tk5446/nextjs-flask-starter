@@ -1,4 +1,4 @@
-description: "Full-stack architecture for job board with WorkOS authentication"
+description: "Full-stack architecture for job board with traditional authentication (Google, Microsoft, Apple, and Email/Password)"
 globs: ["/**/*"]
 rules:
   frontend:
@@ -9,13 +9,17 @@ rules:
       - "Client Components for interactive elements"
       - "Layout-based routing with shared components"
     auth:
-      - "WorkOS AuthKit integration (@workos-inc/authkit-nextjs ^1.0.0)"
-      - "AuthKitProvider for session management"
-      - "Custom AuthProvider component for user context"
+      - "NextAuth.js for Google, Microsoft, Apple, and Email/Password authentication"
+      - "Custom AuthProvider component for user context and session management"
+      - "JWT-based session management"
     environment:
       required_vars:
-        - "NEXT_PUBLIC_WORKOS_CLIENT_ID"
+        - "NEXT_PUBLIC_GOOGLE_CLIENT_ID"
+        - "NEXT_PUBLIC_MICROSOFT_CLIENT_ID"
+        - "NEXT_PUBLIC_APPLE_CLIENT_ID"
         - "NEXT_PUBLIC_BASE_URL"
+        - "NEXTAUTH_SECRET"
+        - "NEXTAUTH_URL"
 
   backend:
     framework: "Flask 3.0.3"
@@ -23,7 +27,8 @@ rules:
       - "pymongo 4.6.1"
       - "python-dotenv 1.0.1"
       - "flask-cors 4.0.0"
-      - "workos 5.15.0"
+      - "flask-jwt-extended 5.0.1"
+      - "flask-login 0.6.2"
     server:
       - "Debug mode enabled for development"
       - "Port 5328 for local development"
@@ -31,16 +36,16 @@ rules:
     patterns:
       - "RESTful API endpoints"
       - "JSON responses"
-      - "WorkOS SDK for auth verification"
+      - "JWT for user authentication"
     database:
       type: "MongoDB"
       driver: "PyMongo"
     environment:
       required_vars:
-        - "WORKOS_API_KEY"
-        - "WORKOS_CLIENT_ID"
         - "MONGO_URI"
         - "FLASK_DEBUG"
+        - "FLASK_SECRET_KEY"
+        - "JWT_SECRET_KEY"
 
   development:
     setup:
@@ -57,7 +62,7 @@ rules:
   deployment:
     environments:
       development:
-        frontend: "localhost:3000"
+        frontend: "localhost:3002"
         backend: "localhost:5328"
         features:
           - "Debug mode enabled"
@@ -66,5 +71,5 @@ rules:
       production:
         requirements:
           - "Environment variables configured"
-          - "WorkOS production credentials"
           - "MongoDB production cluster"
+          - "Secure JWT_SECRET_KEY for authentication"

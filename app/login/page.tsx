@@ -3,24 +3,30 @@
 import { Button, Card, Flex, Heading, Text } from '@radix-ui/themes';
 import { BriefcaseIcon, UserIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleLogin = async (type: 'employer' | 'job_seeker') => {
     try {
       setLoading(true);
       const flaskApiUrl = process.env.NEXT_PUBLIC_FLASK_API_URL;
-      // alert('Flask API URL: ' + flaskApiUrl);
-      const response = await fetch(`${flaskApiUrl}/api/auth/login?type=${type}`);      
-      
+
+      const response = await fetch(`${flaskApiUrl}/api/auth/login?type=${type}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch login URL');
+      }
       const data = await response.json();
-      
-      if (data.authorization_url) {
+
+      if (type === 'job_seeker') {
+        router.push('/welcome/login');
+      } else if (data.authorization_url) {
         window.location.href = data.authorization_url;
       }
     } catch (error) {
-      console.error('Failed to initiate login:', error);
+      console.error('Login error:', error);
     } finally {
       setLoading(false);
     }

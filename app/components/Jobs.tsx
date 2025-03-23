@@ -55,20 +55,22 @@ export function Jobs({ jobs, searchQuery }: JobsProps) {
         }}
       />
       <Grid columns="3" gap="4">
-        {filteredJobs.map(job => (
-          <JobCard 
-            key={job.id}
-            id={job.id}
-            title={job.title}
-            company={job.company}
-            location={job.location}
-            type={job.type}
-            salary={job.salary}
-            postedAt={new Date(job.postedAt)}
-            expiresAt={new Date(job.expiresAt)}
-            extensionsUsed={job.extensionsUsed}
-          />
-        ))}
+        {filteredJobs.map(job => {
+          return (
+            <JobCard 
+              key={job.id}
+              id={job.id}
+              title={job.title}
+              company={job.company}
+              location={job.location}
+              type={job.type}
+              salary={job.salary}
+              postedAt={new Date(job.postedAt).toISOString()}
+              expiresAt={new Date(job.expiresAt).toISOString()}
+              extensionsUsed={job.extensionsUsed}
+            />
+          );
+        })}
       </Grid>
     </div>
   );

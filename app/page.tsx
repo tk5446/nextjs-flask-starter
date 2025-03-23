@@ -23,7 +23,21 @@ export default function Home() {
           throw new Error(`Failed to fetch jobs: ${response.status} ${response.statusText}`);
         }
         const data = await response.json();
-        setJobs(data.jobs);
+        
+        // Convert Date to string if necessary
+        const jobData: Job[] = data.jobs.map((job: any) => ({
+          ...job,
+          postedAt: parseISO(job.postedAt),
+          expiresAt: parseISO(job.expiresAt),
+        }));
+
+        const jobs: Job[] = jobData.map(job => ({
+          ...job,
+          postedAt: new Date(job.postedAt).toISOString(),
+          expiresAt: new Date(job.expiresAt).toISOString(),
+        }));
+
+        setJobs(jobs);
         setError(null);
       } catch (err) {
         console.error('Error fetching jobs:', err);
@@ -74,14 +88,7 @@ export default function Home() {
             <Text size="3">Loading jobs...</Text>
           </div>
         ) : (
-          <Jobs jobs={jobs.map(job => {
-            console.log('Processing job:', job);
-            return {
-              ...job,
-              postedAt: parseISO(job.postedAt),
-              expiresAt: parseISO(job.expiresAt)
-            };
-          })} searchQuery={searchQuery} />
+          <Jobs jobs={jobs} searchQuery={searchQuery} />
         )}
       </div>
     </div>
